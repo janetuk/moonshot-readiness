@@ -33,9 +33,33 @@ def test_basic():
         results = results + "    Hostname is FQDN:\n        Your servers hostname is not fully qualified or resolvable. This is required in order to prevent certain classes of attack.\n"
 
 
-    cmd = os.popen("uname -s")
-    cmd = cmd.read()
-    if cmd.strip() == 'Linux':
+    good_os = False
+    if os.path.isfile("/etc/redhat-release") == True:
+        fil = open("/etc/redhat-release", "r")
+        name = (fil.read()).strip()
+        fil.close()
+        if (name == "RedHat release 6.3 (Final)" or name == "RedHat release 6.4 (Final)" or name == "RedHat release 6.5 (Final)" or name == "RedHat release 6.6 (Final)" or name == "CentOS release 6.3 (Final)" or name == "CentOS release 6.4 (Final)" or name == "CentOS release 6.5 (Final)" or name == "CentOS release 6.6 (Final)" or name == "Scientific Linux release 6.3 (Final)" or name == "Scientific Linux release 6.4 (Final)" or name == "Scientific Linux release 6.5 (Final)" or name == "Scientific Linux release 6.6 (Final)"):
+            good_os = True
+    elif os.path.isfile("/etc/os-release") == True:
+        fil = open("/etc/os-release", "r")
+        text = fil.read()
+        fil.close()
+        lines = text.split("\n")
+        good_name = False
+        good_version = False
+        i = 0
+        while i < len(lines):
+            words = lines[i].split("=")
+            if words[0] == "NAME":
+                if words[1] == "\"Debian GNU/Linux\"":
+                    good_name = True
+            if words[0] == "VERSION_ID":
+                if words[1] == "\"6\"" or words[1] == "\"7\"":
+                    good_version = True
+            i = i + 1
+        if good_name == True and good_version == True:
+            good_os = True
+    if good_os == True:
         print("    Supported OS...                                [OKAY]")
     else:
         print("    Supported OS...                                [WARN]")
