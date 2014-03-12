@@ -21,6 +21,8 @@ def test_basic():
     print("\n\nTesting task basic...")
 
 
+#Hostname is FQDN
+
     cmd = os.popen("hostname -f")
     fqdn1 = (cmd.read()).strip()
     cmd = os.popen("dig " + fqdn1 + " +short")
@@ -33,6 +35,8 @@ def test_basic():
         print("    Hostname is FQDN...                            [FAIL]")
         results = results + "    Hostname is FQDN:\n        Your servers hostname is not fully qualified or resolvable. This is required in order to prevent certain classes of attack.\n"
 
+
+#Supported OS
 
     good_os = False
     if os.path.isfile("/etc/redhat-release") == True:
@@ -67,6 +71,8 @@ def test_basic():
         results = results + "    Supported OS:\n        You are not running a supported OS. Moonshot may not work as indicated in the documentation.\n"
 
 
+#Moonshot repository configuration
+
     cmd = os.popen("apt-cache search -n \"moonshot\"")
     cmd = cmd.read()
     if cmd.strip() != '':
@@ -75,6 +81,32 @@ def test_basic():
         print("    Moonshot repositories configured...            [WARN]")
         results = results + "    Moonshot repositories configured:\n        The Moonshot repositories do not appear to exist on this system. You will not be able to upgrade Moonshot using your distributions package manager.\n"
 
+
+#Moonshot Signing Key
+
+    cmd = os.popen("apt-key --keyring /etc/apt/trusted.gpg list")
+    cmd = cmd.read()
+    key1 = False
+    key2 = False
+    key3 = False    
+    words=re.split(r'[ \t\n/]+', cmd)
+    i = 0
+    while i < len(words):
+        if words[i] == "2EB761E3":
+            key1 = True
+        if words[i] == "CEA67BB6":
+            key2 = True
+        if words[i] == "DF209716":
+            key3 = True
+        i = i + 1
+    if (key1 == True and key2 == True and key3 == True):
+        print("    Moonshot Signing Key...                        [OKAY]")
+    else:
+        print("    Moonshot Signing Key...                        [WARN]")
+        results = results + "    Moonshot Signing Key:\n        The Moonshot repository key is not installed, you will have difficulty updating packages.\n"
+
+
+#Current version
 
     cmd = os.popen("apt-get -u upgrade --assume-no moonshot")
     cmd = cmd.read()
@@ -96,6 +128,9 @@ def test_rp():
     test_basic()
     print("Testing task rp...")
 
+
+#/etc/radsec.conf
+
     cmd = os.path.isfile("/etc/radsec.conf")
     if cmd == True:
         print("    radsec.conf...                                 [OKAY]\n\n")
@@ -115,6 +150,8 @@ def test_rp_proxy():
     print("Testing task rp-proxy...")
 
 
+#APC
+
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex(('apc.moonshot.ja.net', 2083))
     if result == 0:
@@ -124,6 +161,8 @@ def test_rp_proxy():
         results = results + "    APC:\n        apc.moonshot.ja.net does not seem to be accessible. Please check the servers network connection, and see status.moonshot.ja.net for any downtime or maintenance issues.\n"
 
 
+#Trust Router
+
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex(('tr1.moonshot.ja.net', 12309))
     if result == 0:
@@ -132,6 +171,8 @@ def test_rp_proxy():
         print("    Trust Router...                                [FAIL]")
         results = results + "    Trust Router:\n        tr1.moonshot.ja.net does not seem to be accessible. Please check the servers network connection, and see status.moonshot.ja.net for any downtime or maintenance issues.\n"
 
+
+#flatstore-users
 
     root = False
     freerad = False
@@ -149,6 +190,8 @@ def test_rp_proxy():
         print("    Flatstore-users...                             [FAIL]")
         results = results + "    Flatstore-users:\n        /etc/moonshot/flatstore-users could not be found, or does not contain all the user accounts it needs to. You may be unable to authenticate to the trust router.\n"
         
+
+#Trust Identity
 
     if os.path.isfile("/etc/freeradius/.local/share/moonshot-ui/identities.txt") == True:
         print("    Trust Identity...                              [OKAY]\n\n")
@@ -168,6 +211,8 @@ def test_idp():
     print("Testing task idp...")
 
 
+#Port 2083
+
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex(('localhost', 2083))
     if result == 0:
@@ -177,6 +222,8 @@ def test_idp():
         results = results + "    Port 2083:\n        Port 2083 appears to be closed. RP's will not be able to initiate connections to your IDP.\n"
 
 
+#Port 12309
+
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex(('localhost', 12309))
     if result == 0:
@@ -185,6 +232,8 @@ def test_idp():
         print("    Port 12309...                                  [FAIL]")
         results = results + "    Port 12309:\n        Port 12309 appears to be closed. The trust router will not be able to initiate connections to your IDP.\n"
 
+
+#flatstore-users
 
     root = False
     freerad = False
@@ -203,6 +252,8 @@ def test_idp():
         results = results + "    Flatstore-users:\n        /etc/moonshot/flatstore-users could not be found, or does not contain all the user accounts it needs to. You may be unable to authenticate to the trust router.\n"
 
 
+#Trust Identity
+
     if os.path.isfile("/etc/freeradius/.local/share/moonshot-ui/identities.txt") == True:
         print("    Trust Identity...                              [OKAY]\n\n")
     else:
@@ -220,6 +271,8 @@ def test_client():
     test_basic()
     print("Testing task client...")
 
+
+#gss/mech
 
     cmd = os.path.isfile("/usr/etc/gss/mech") 
     if cmd == True:
@@ -263,6 +316,8 @@ def test_ssh_client():
     print("Testing task ssh-client...")
 
 
+#GSSAPIAuthentication enabled
+
     cmd = os.popen("augtool print /files/etc/ssh/ssh_config/Host/GSSAPIAuthentication")
     cmd = cmd.read()
     if cmd.strip() == "/files/etc/ssh/ssh_config/Host/GSSAPIAuthentication = \"yes\"":
@@ -271,6 +326,8 @@ def test_ssh_client():
         print("    GSSAPIAuthentication enabled...                [FAIL]")
         results = results + "    GSSAPIAuthentication enabled:\n        GSSAPIAuthentication must be enabled for Moonshot to function when using SSH.\n"
 
+
+#GSSAPIKeyExchange enabled
 
     cmd = os.popen("augtool print /files/etc/ssh/ssh_config/Host/GSSAPIKeyExchange")
     cmd = cmd.read()
@@ -292,6 +349,8 @@ def test_ssh_server():
     print("Testing task ssh-client...")
 
 
+#Privilege separation disabled
+
     cmd = os.popen("augtool print /files/etc/ssh/sshd_config/UsePrivilegeSeparation")
     cmd = cmd.read()
     if cmd.strip() == "/files/etc/ssh/sshd_config/UsePrivilegeSeparation = \"no\"":
@@ -300,6 +359,8 @@ def test_ssh_server():
         print("    Privilege separation disabled...               [FAIL]")
         results = results + "    Privilege separation disabled:\n        Moonshot currently requires that OpenSSH server has privilege separation disabled.\n"
 
+
+#GSSAPIAuthentication
 
     cmd = os.popen("augtool print /files/etc/ssh/sshd_config/GSSAPIAuthentication")
     cmd = cmd.read()
@@ -324,8 +385,7 @@ else:
     i = 1
     while i < size:
         if (sys.argv[i]).strip() == 'help':
-            print "\n\nUsage: moonshot-readiness [task] [task]...\n\n  Available tasks:\n    help\n    minimal (default)\n    client\n    rp\n    rp-proxy\n    idp-proxy\n    ssh-client\n    ssh-server\n\n  ¦---------------------------------------------------------------------------------------------------------------¦\n  ¦ TASK            ¦  DEPENDENCY  ¦  DESCRIPTION                                                                 ¦\n  ¦-----------------¦--------------¦------------------------------------------------------------------------------¦\n  ¦ basic           ¦  none        ¦  Basic set of test, required for Moonshot to function at all in any capacity ¦\n  ¦ client          ¦  basic       ¦  Fundamental tests required for Moonshot to function as a client             ¦\n  ¦ rp              ¦  basic       ¦  Fundamental tests required for Moonshot to function as an RP                ¦\n  ¦ rp-proxy        ¦  rp          ¦  Tests required for Moonshot to function as a RadSec RP                      ¦\n  ¦ idp             ¦  rp          ¦  Tests to verify if FreeRADIUS is correctly configured                       ¦\n  ¦ openssh-client  ¦  client      ¦  Tests to verify if the openssh-client is correctly configured               ¦\n  ¦ openssh-rp      ¦  rp          ¦  Tests to verify if the openssh-server is correctly configured               ¦\n  ¦ httpd-client    ¦  client      ¦  Tests to verify if mod-auth-gssapi is correctly configured                  ¦\n  ¦ httpd-rp        ¦  rp          ¦  Tests to verify if mod-auth-gssapi is correctly configured                  ¦\n  ¦-----------------¦--------------¦------------------------------------------------------------------------------¦\n\n"
-
+            print "\n\nUsage: moonshot-readiness [task] [task]...\n\n  Available tasks:\n    help\n    minimal (default)\n    client\n    rp\n    rp-proxy\n    idp-proxy\n    ssh-client\n    ssh-server\n\n  ¦---------------------------------------------------------------------------------------------------------------¦\n  ¦ TASK            ¦  DEPENDENCY  ¦  DESCRIPTION                                                                 ¦\n  ¦-----------------¦--------------¦------------------------------------------------------------------------------¦\n  ¦ basic           ¦  none        ¦  Basic set of test, required for Moonshot to function at all in any capacity ¦\n  ¦ client          ¦  basic       ¦  Fundamental tests required for Moonshot to function as a client             ¦\n  ¦ rp              ¦  basic       ¦  Fundamental tests required for Moonshot to function as an RP                ¦\n  ¦ rp-proxy        ¦  rp          ¦  Tests required for Moonshot to function as a RadSec RP                      ¦\n  ¦ idp             ¦  rp          ¦  Tests to verify if FreeRADIUS is correctly configured                       ¦\n  ¦ openssh-client  ¦  client      ¦  Tests to verify if the openssh-client is correctly configured               ¦\n  ¦ openssh-rp      ¦  rp          ¦  Tests to verify if the openssh-server is correctly configured               ¦\n  ¦ httpd-client    ¦  client      ¦  Tests to verify if mod-auth-gssapi is correctly configured                  ¦\n  ¦ httpd-rp        ¦  rp          ¦  Tests to verify if mod-auth-gssapi is correctly configured                  ¦\n  ¦-----------------¦--------------¦------------------------------------------------------------------------------¦\n\n\nSome tests require root privileges to be made.\nSome tests require the following tools:\n  augeas     (installing with apt-get install augeas-tools)\n  dig        (installing with apt-get install dnsutils)\n  hostname   (installing with apt-get install hostname)\n\n"
 
 
             sys.exit()
