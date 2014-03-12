@@ -180,10 +180,34 @@ def test_idp():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex(('localhost', 12309))
     if result == 0:
-        print("    Port 12309...                                  [OKAY]\n\n")
+        print("    Port 12309...                                  [OKAY]")
     else:
-        print("    Port 12309...                                  [FAIL\n\n]")
+        print("    Port 12309...                                  [FAIL]")
         results = results + "    Port 12309:\n        Port 12309 appears to be closed. The trust router will not be able to initiate connections to your IDP.\n"
+
+
+    root = False
+    freerad = False
+    if os.path.isfile("/etc/moonshot/flatstore-users") == True:
+        fil = open("/etc/moonshot/flatstore-users", "r")
+        for line in fil:
+            if line.strip() == "root":
+                root = True
+            if line.strip() == "freerad":
+                freerad = True
+        fil.close()
+    if root == True and freerad == True:
+        print("    Flatstore-users...                             [OKAY]")
+    else:
+        print("    Flatstore-users...                             [FAIL]")
+        results = results + "    Flatstore-users:\n        /etc/moonshot/flatstore-users could not be found, or does not contain all the user accounts it needs to. You may be unable to authenticate to the trust router.\n"
+
+
+    if os.path.isfile("/etc/freeradius/.local/share/moonshot-ui/identities.txt") == True:
+        print("    Trust Identity...                              [OKAY]\n\n")
+    else:
+        print("    Trust Identity...                              [FAIL]\n\n")
+        results = results + "    Trust Identity:\n        No trust identity could be found for the freeradius user account. You will not be able to authenticate to the trust router.\n"
 
 
 
