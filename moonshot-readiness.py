@@ -4,6 +4,7 @@ import os
 import socket
 import sys
 import stat
+import re
 
 
 print "\n\n===============================  MOONSHOT-READINESS  ==============================="
@@ -182,9 +183,15 @@ def test_client():
             s2 = False
             fil = open("/usr/etc/gss/mech","r")
             for line in fil:
-                if string1 in line:
+                words=re.split(r'[ \t]+', line)
+                i = 0
+                str_reg = ""
+                while i < len(words):
+                    str_reg = str_reg + words[i] + " "
+                    i = i+1
+                if string1 == str_reg.strip():
                     s1 = True
-                if string2 in line:
+                if string2 == str_reg.strip():
                     s2 = True
             fil.close()
             
