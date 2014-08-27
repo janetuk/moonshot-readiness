@@ -37,7 +37,7 @@ def test_basic():
             print("    Hostname is FQDN...                            [OKAY]")
         else:
             print("    Hostname is FQDN...                            [FAIL]")
-            results = results + "    Hostname is FQDN:\n        Your servers hostname is not fully qualified or resolvable. This is required in order to prevent certain classes of attack.\n"
+            results = results + "    Hostname is FQDN:\n        Your servers IP address " + address + " is not resolvable to '" + fqdn1 + "' instead script got '" + fqdn2.strip('.') + "'. This is required in order to prevent certain classes of attack.\n"
 
 
 #Supported OS
