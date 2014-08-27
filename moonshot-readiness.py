@@ -27,13 +27,17 @@ def test_basic():
     fqdn1 = (cmd.read()).strip()
     cmd = os.popen("dig " + fqdn1 + " +short")
     address = (cmd.read()).strip()
-    cmd = os.popen("dig -x " + address + " +short")
-    fqdn2 = (cmd.read()).strip()
-    if fqdn1 + "." == fqdn2:
-        print("    Hostname is FQDN...                            [OKAY]")
-    else:
-        print("    Hostname is FQDN...                            [FAIL]")
-        results = results + "    Hostname is FQDN:\n        Your servers hostname is not fully qualified or resolvable. This is required in order to prevent certain classes of attack.\n"
+    if len(address) == 0:
+         print("    Hostname is FQDN...                            [FAIL]")
+         results = results + "    Hostname is FQDN:\n        Your servers hostname ("+fqdn1+") is not fully resolvable. This is required in order to prevent certain classes of attack.\n"
+    else:      
+        cmd = os.popen("dig -x " + address + " +short")
+        fqdn2 = (cmd.read()).strip()
+        if fqdn1 + "." == fqdn2:
+            print("    Hostname is FQDN...                            [OKAY]")
+        else:
+            print("    Hostname is FQDN...                            [FAIL]")
+            results = results + "    Hostname is FQDN:\n        Your servers IP address " + address + " is not resolvable to '" + fqdn1 + "' instead script got '" + fqdn2.strip('.') + "'. This is required in order to prevent certain classes of attack.\n"
 
 
 #Supported OS
