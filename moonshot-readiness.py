@@ -112,9 +112,9 @@ def test_basic():
     cmd = cmd.read()
     if cmd.strip() == 'Reading package lists... Done\nBuilding dependency tree\nReading state information... Done\n0 upgraded, 0 newly installed, 0 to remove and\
  0 not upgraded.':
-        print("    Monshot current version...                     [OKAY]\n\n")
+        print("    Moonshot current version...                     [OKAY]\n\n")
     else:
-        print("    Monshot current version...                     [WARN]\n\n")
+        print("    Moonshot current version...                     [WARN]\n\n")
         results = results + "    Moonshot current version:\n        You are not running the latest version of the Moonshot software.\n"
 
 
