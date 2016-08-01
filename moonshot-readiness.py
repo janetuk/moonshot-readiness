@@ -69,7 +69,7 @@ def test_basic():
                     good_name = True
             if words[0] == "VERSION_ID":
                 rel_ver = words[1].strip("\"").split(".")[0]
-                if (rel_ver == "6") or (rel_ver == "7"):
+                if (rel_ver == "6") or (rel_ver == "7") or (rel_ver == "8"):
                     good_version = True
             i = i + 1
         if good_name == True and good_version == True:
