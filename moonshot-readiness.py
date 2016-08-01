@@ -51,13 +51,7 @@ def test_basic():
 #Supported OS
 
     good_os = False
-    if os.path.isfile("/etc/redhat-release") == True:
-        fil = open("/etc/redhat-release", "r")
-        name = (fil.read()).strip()
-        fil.close()
-        if (name == "RedHat release 6.3 (Final)" or name == "RedHat release 6.4 (Final)" or name == "RedHat release 6.5 (Final)" or name == "RedHat release 6.6 (Final)" or name == "CentOS release 6.3 (Final)" or name == "CentOS release 6.4 (Final)" or name == "CentOS release 6.5 (Final)" or name == "CentOS release 6.6 (Final)" or name == "Scientific Linux release 6.3 (Final)" or name == "Scientific Linux release 6.4 (Final)" or name == "Scientific Linux release 6.5 (Final)" or name == "Scientific Linux release 6.6 (Final)"):
-            good_os = True
-    elif os.path.isfile("/etc/os-release") == True:
+    if os.path.isfile("/etc/os-release") == True:
         fil = open("/etc/os-release", "r")
         text = fil.read()
         fil.close()
@@ -68,13 +62,23 @@ def test_basic():
         while i < len(lines):
             words = lines[i].split("=")
             if words[0] == "NAME":
-                if words[1] == "\"Debian GNU/Linux\"":
+                if words[1].strip("\"") == "Debian GNU/Linux":
+                    good_name = True
+            if words[0] == "ID":
+                if (words[1].strip("\"") == "centos" or words[1].strip("\"") == "rhel"):
                     good_name = True
             if words[0] == "VERSION_ID":
-                if words[1] == "\"6\"" or words[1] == "\"7\"":
+                rel_ver = words[1].strip("\"").split(".")[0]
+                if (rel_ver == "6") or (rel_ver == "7") or (rel_ver == "8"):
                     good_version = True
             i = i + 1
         if good_name == True and good_version == True:
+            good_os = True
+    elif os.path.isfile("/etc/redhat-release") == True:
+        fil = open("/etc/redhat-release", "r")
+        name = (fil.read()).strip().split(".")[0]
+        fil.close()
+        if (name == "RedHat release 6" or name == "CentOS release 6" or name == "Scientific Linux release 6"):
             good_os = True
     if good_os == True:
         print("    Supported OS...                                " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
@@ -165,23 +169,23 @@ def test_rp_proxy():
 #APC
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    result = sock.connect_ex(('apc.moonshot.ja.net', 2083))
+    result = sock.connect_ex(('ov-apc.moonshot.ja.net', 2083))
     if result == 0:
         print("    APC...                                         " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
     else:
         print("    APC...                                         " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
-        results = results + "    APC:\n        apc.moonshot.ja.net does not seem to be accessible. Please check the servers network connection, and see status.moonshot.ja.net for any downtime or maintenance issues.\n"
+        results = results + "    APC:\n        ov-apc.moonshot.ja.net does not seem to be accessible. Please check the servers network connection, and see status.moonshot.ja.net for any downtime or maintenance issues.\n"
 
 
 #Trust Router
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    result = sock.connect_ex(('tr1.moonshot.ja.net', 12309))
+    result = sock.connect_ex(('tr.moonshot.ja.net', 12309))
     if result == 0:
         print("    Trust Router...                                " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
     else:
         print("    Trust Router...                                " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
-        results = results + "    Trust Router:\n        tr1.moonshot.ja.net does not seem to be accessible. Please check the servers network connection, and see status.moonshot.ja.net for any downtime or maintenance issues.\n"
+        results = results + "    Trust Router:\n        tr.moonshot.ja.net does not seem to be accessible. Please check the servers network connection, and see status.moonshot.ja.net for any downtime or maintenance issues.\n"
 
 
 #flatstore-users
