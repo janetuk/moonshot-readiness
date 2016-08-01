@@ -94,11 +94,11 @@ def test_basic():
 #Moonshot repository configuration
 
     if (is_rhel == True):
-        cmd = os.popen('yum -q list all "moonshot-ui" 2>&1')
+        cmd = os.popen('yum -q list all "moonshot-gss-eap" 2>&1')
     else:
-        cmd = os.popen('apt-cache search -n "moonshot-ui"')
+        cmd = os.popen('apt-cache search -n "moonshot-gss-eap"')
     cmd_result = cmd.read()
-    if (cmd_result.lower().find('moonshot-ui') >= 0):
+    if (cmd_result.lower().find('moonshot-gss-eap') >= 0):
         print("    Moonshot repositories configured...            " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
     else:
         print("    Moonshot repositories configured...            " + bcolors.WARNING + "[WARN]" + bcolors.ENDC + "")
