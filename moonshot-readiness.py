@@ -51,6 +51,7 @@ def test_basic():
 #Supported OS
 
     good_os = False
+    is_rhel = False
     if os.path.isfile("/etc/os-release") == True:
         fil = open("/etc/os-release", "r")
         text = fil.read()
@@ -67,6 +68,7 @@ def test_basic():
             if words[0] == "ID":
                 if (words[1].strip("\"") == "centos" or words[1].strip("\"") == "rhel"):
                     good_name = True
+                    is_rhel = True
             if words[0] == "VERSION_ID":
                 rel_ver = words[1].strip("\"").split(".")[0]
                 if (rel_ver == "6") or (rel_ver == "7") or (rel_ver == "8"):
@@ -80,6 +82,8 @@ def test_basic():
         fil.close()
         if (name == "RedHat release 6" or name == "CentOS release 6" or name == "Scientific Linux release 6"):
             good_os = True
+            is_rhel = True
+
     if good_os == True:
         print("    Supported OS...                                " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
     else:
@@ -89,9 +93,12 @@ def test_basic():
 
 #Moonshot repository configuration
 
-    cmd = os.popen("apt-cache search -n \"moonshot\"")
-    cmd = cmd.read()
-    if cmd.strip() != '':
+    if (is_rhel == True):
+        cmd = os.popen('yum -q list all "moonshot-ui" 2>&1')
+    else:
+        cmd = os.popen('apt-cache search -n "moonshot-ui"')
+    cmd_result = cmd.read()
+    if (cmd_result.lower().find('moonshot-ui') >= 0):
         print("    Moonshot repositories configured...            " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
     else:
         print("    Moonshot repositories configured...            " + bcolors.WARNING + "[WARN]" + bcolors.ENDC + "")
@@ -100,22 +107,22 @@ def test_basic():
 
 #Moonshot Signing Key
 
-    cmd = os.popen("apt-key --keyring /etc/apt/trusted.gpg list")
+    if (is_rhel == True):
+        cmd = os.popen("rpm -q gpg-pubkey --qf '%{version} %{summary}\n'")
+    else:
+        cmd = os.popen("apt-key --keyring /etc/apt/trusted.gpg list")
     cmd = cmd.read()
     key1 = False
     key2 = False
-    key3 = False    
-    words=re.split(r'[ \t\n/]+', cmd)
+    words=re.split(r'[ \t\n/]+', cmd.upper())
     i = 0
     while i < len(words):
-        if words[i] == "2EB761E3":
-            key1 = True
         if words[i] == "CEA67BB6":
+            key1 = True
+        if words[i] == "5B8179FD":
             key2 = True
-        if words[i] == "DF209716":
-            key3 = True
         i = i + 1
-    if (key1 == True and key2 == True and key3 == True):
+    if (key1 == True and key2 == True):
         print("    Moonshot Signing Key...                        " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
     else:
         print("    Moonshot Signing Key...                        " + bcolors.WARNING + "[WARN]" + bcolors.ENDC + "")
@@ -124,10 +131,12 @@ def test_basic():
 
 #Current version
 
-    cmd = os.popen("apt-get -u upgrade --assume-no moonshot")
+    if (is_rhel == True):
+        cmd = os.popen("yum -q --assumeno install moonshot-gss-eap 2>&1")
+    else:
+        cmd = os.popen("apt-get --assume-no install moonshot-gss-eap")
     cmd = cmd.read()
-    if cmd.strip() == 'Reading package lists... Done\nBuilding dependency tree\nReading state information... Done\n0 upgraded, 0 newly installed, 0 to remove and\
- 0 not upgraded.':
+    if (cmd.find("0 newly installed") >= 0) or (cmd.find("already installed and latest version") >= 0):
         print("    Moonshot current version...                    " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
     else:
         print("    Moonshot current version...                    " + bcolors.WARNING + "[WARN]" + bcolors.ENDC + "\n\n")
