@@ -165,23 +165,23 @@ def test_rp_proxy():
 #APC
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    result = sock.connect_ex(('apc.moonshot.ja.net', 2083))
+    result = sock.connect_ex(('ov-apc.moonshot.ja.net', 2083))
     if result == 0:
         print("    APC...                                         " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
     else:
         print("    APC...                                         " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
-        results = results + "    APC:\n        apc.moonshot.ja.net does not seem to be accessible. Please check the servers network connection, and see status.moonshot.ja.net for any downtime or maintenance issues.\n"
+        results = results + "    APC:\n        ov-apc.moonshot.ja.net does not seem to be accessible. Please check the servers network connection, and see status.moonshot.ja.net for any downtime or maintenance issues.\n"
 
 
 #Trust Router
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    result = sock.connect_ex(('tr1.moonshot.ja.net', 12309))
+    result = sock.connect_ex(('tr.moonshot.ja.net', 12309))
     if result == 0:
         print("    Trust Router...                                " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
     else:
         print("    Trust Router...                                " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
-        results = results + "    Trust Router:\n        tr1.moonshot.ja.net does not seem to be accessible. Please check the servers network connection, and see status.moonshot.ja.net for any downtime or maintenance issues.\n"
+        results = results + "    Trust Router:\n        tr.moonshot.ja.net does not seem to be accessible. Please check the servers network connection, and see status.moonshot.ja.net for any downtime or maintenance issues.\n"
 
 
 #flatstore-users
