@@ -117,12 +117,12 @@ def test_basic():
     words=re.split(r'[ \t\n/]+', cmd.upper())
     i = 0
     while i < len(words):
-        if words[i] == "CEA67BB6":
-            key1 = True
         if words[i] == "5B8179FD":
+            key1 = True
+        elif words[i] == "CEA67BB6":
             key2 = True
         i = i + 1
-    if (key1 == True and key2 == True):
+    if (key1 == True or key2 == True):
         print("    Moonshot Signing Key...                        " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
     else:
         print("    Moonshot Signing Key...                        " + bcolors.WARNING + "[WARN]" + bcolors.ENDC + "")
