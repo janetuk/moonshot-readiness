@@ -18,6 +18,24 @@ class bcolors:
 print "\n\n===============================  MOONSHOT-READINESS  ==============================="
 results = "====================================================================================\n\nTest complete, failed tests:\n"
 
+cmd = os.popen('which hostname 2>/dev/null')
+bin_hostname = (cmd.read()).strip()
+cmd = os.popen('which dig 2>/dev/null')
+bin_dig = (cmd.read()).strip()
+cmd = os.popen('which grep 2>/dev/null')
+bin_grep = (cmd.read()).strip()
+# RHEL specific
+cmd = os.popen('which yum 2>/dev/null')
+bin_yum = (cmd.read()).strip()
+cmd = os.popen('which rpm 2>/dev/null')
+bin_rpm = (cmd.read()).strip()
+# Debian specific
+cmd = os.popen('which apt-cache 2>/dev/null')
+bin_aptcache = (cmd.read()).strip()
+cmd = os.popen('which apt-key 2>/dev/null')
+bin_aptkey = (cmd.read()).strip()
+cmd = os.popen('which apt-get 2>/dev/null')
+bin_aptget = (cmd.read()).strip()
 
 
 #=================================  TESTS BASIC  ===========================================
@@ -28,61 +46,59 @@ def test_basic():
     global results
     print("\n\nTesting task basic...")
 
-
 #Hostname is FQDN
 
-    cmd = os.popen("hostname -f")
+    cmd = os.popen("%s -f" % bin_hostname)
     fqdn1 = (cmd.read()).strip()
-    cmd = os.popen("dig " + fqdn1 + " +short")
+    cmd = os.popen("%s %s +short" % (bin_dig, fqdn1))
     address = (cmd.read()).strip()
     if len(address) == 0:
          print("    Hostname is FQDN...                            " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
-         results = results + "    Hostname is FQDN:\n        Your servers hostname ("+fqdn1+") is not fully resolvable. This is required in order to prevent certain classes of attack.\n"
+         results = results + "    Hostname is FQDN:\n        Your server\'s hostname ("+fqdn1+") is not fully resolvable. This is required in order to prevent certain classes of attack.\n"
     else:      
-        cmd = os.popen("dig -x " + address + " +short")
+        cmd = os.popen("%s -x %s +short" % (bin_dig, address))
         fqdn2 = (cmd.read()).strip()
         if fqdn1 + "." == fqdn2:
             print("    Hostname is FQDN...                            " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
         else:
             print("    Hostname is FQDN...                            " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
-            results = results + "    Hostname is FQDN:\n        Your servers IP address " + address + " is not resolvable to '" + fqdn1 + "' instead script got '" + fqdn2.strip('.') + "'. This is required in order to prevent certain classes of attack.\n"
+            results = results + "    Hostname is FQDN:\n        Your server\'s IP address " + address + " is not resolvable to '" + fqdn1 + "' instead script got '" + fqdn2.strip('.') + "'. This is required in order to prevent certain classes of attack.\n"
 
 
 #Supported OS
 
     good_os = False
     is_rhel = False
+    rel_os = ""
+    rel_ver = ""
     if os.path.isfile("/etc/os-release") == True:
         fil = open("/etc/os-release", "r")
         text = fil.read()
         fil.close()
         lines = text.split("\n")
-        good_name = False
-        good_version = False
         i = 0
         while i < len(lines):
             words = lines[i].split("=")
-            if words[0] == "NAME":
-                if words[1].strip("\"") == "Debian GNU/Linux":
-                    good_name = True
             if words[0] == "ID":
-                if (words[1].strip("\"") == "centos" or words[1].strip("\"") == "rhel"):
-                    good_name = True
-                    is_rhel = True
-            if words[0] == "VERSION_ID":
+                rel_os = words[1].strip("\"")
+            elif words[0] == "VERSION_ID":
                 rel_ver = words[1].strip("\"").split(".")[0]
-                if (rel_ver == "6") or (rel_ver == "7") or (rel_ver == "8"):
-                    good_version = True
             i = i + 1
-        if good_name == True and good_version == True:
-            good_os = True
     elif os.path.isfile("/etc/redhat-release") == True:
         fil = open("/etc/redhat-release", "r")
-        name = (fil.read()).strip().split(".")[0]
+        name = (fil.read()).strip().split(".")[0].lower()
         fil.close()
-        if (name == "RedHat release 6" or name == "CentOS release 6" or name == "Scientific Linux release 6"):
-            good_os = True
-            is_rhel = True
+        rel_ver = name.rsplit(" ", 1)[1]
+        rel_os = name.split(" ")[0]
+
+    # now for the OS checking: We support Debian, Ubuntu, RHEL, CentOS, Scientific Linux
+    if (rel_os == 'debian'):
+        good_os = (rel_ver == '7' or rel_ver == '8')
+    elif (rel_os == 'ubuntu'):
+        good_os = (rel_ver == '12' or rel_ver == '14')
+    elif (rel_os == 'redhat' or rel_os == 'rhel' or rel_os == 'centos' or rel_os == 'scientific'):
+        is_rhel = True
+        good_os = (rel_ver == '6' or rel_ver == '7')
 
     if good_os == True:
         print("    Supported OS...                                " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
@@ -94,9 +110,9 @@ def test_basic():
 #Moonshot repository configuration
 
     if (is_rhel == True):
-        cmd = os.popen('yum -q list all "moonshot-gss-eap" 2>&1')
+        cmd = os.popen('%s -q list all "moonshot-gss-eap" 2>&1' % bin_yum)
     else:
-        cmd = os.popen('apt-cache search -n "moonshot-gss-eap"')
+        cmd = os.popen('%s search -n "moonshot-gss-eap"' % bin_aptcache)
     cmd_result = cmd.read()
     if (cmd_result.lower().find('moonshot-gss-eap') >= 0):
         print("    Moonshot repositories configured...            " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
@@ -108,9 +124,9 @@ def test_basic():
 #Moonshot Signing Key
 
     if (is_rhel == True):
-        cmd = os.popen("rpm -q gpg-pubkey --qf '%{version} %{summary}\n'")
+        cmd = os.popen("%s %s" % (bin_rpm, " -q gpg-pubkey --qf '%{version} %{summary}\n'"))
     else:
-        cmd = os.popen("apt-key --keyring /etc/apt/trusted.gpg list")
+        cmd = os.popen("%s --keyring /etc/apt/trusted.gpg list" % bin_aptkey)
     cmd = cmd.read()
     key1 = False
     key2 = False
@@ -132,11 +148,11 @@ def test_basic():
 #Current version
 
     if (is_rhel == True):
-        cmd = os.popen("yum -q --assumeno install moonshot-gss-eap 2>&1")
+        cmd = os.popen("%s -q --assumeno install moonshot-gss-eap 2>&1" % bin_yum)
     else:
-        cmd = os.popen("apt-get --assume-no install moonshot-gss-eap")
+        cmd = os.popen("%s --assume-no install moonshot-gss-eap" % bin_aptget)
     cmd = cmd.read()
-    if (cmd.find("0 newly installed") >= 0) or (cmd.find("already installed and latest version") >= 0):
+    if (cmd.find("0 newly installed") >= 0) or (cmd.find("0 to newly install") >= 0) or (cmd.find("already the newest version") >= 0) or (cmd.find("already installed and latest version") >= 0):
         print("    Moonshot current version...                    " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
     else:
         print("    Moonshot current version...                    " + bcolors.WARNING + "[WARN]" + bcolors.ENDC + "\n\n")
