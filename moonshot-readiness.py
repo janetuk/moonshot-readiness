@@ -46,25 +46,6 @@ def test_basic():
     global results
     print("\n\nTesting task basic...")
 
-#Hostname is FQDN
-
-    cmd = os.popen("%s -f" % bin_hostname)
-    fqdn1 = (cmd.read()).strip()
-    cmd = os.popen("%s %s +short" % (bin_dig, fqdn1))
-    address = (cmd.read()).strip()
-    if len(address) == 0:
-         print("    Hostname is FQDN...                            " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
-         results = results + "    Hostname is FQDN:\n        Your server\'s hostname ("+fqdn1+") is not fully resolvable. This is required in order to prevent certain classes of attack.\n"
-    else:      
-        cmd = os.popen("%s -x %s +short" % (bin_dig, address))
-        fqdn2 = (cmd.read()).strip()
-        if fqdn1 + "." == fqdn2:
-            print("    Hostname is FQDN...                            " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
-        else:
-            print("    Hostname is FQDN...                            " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
-            results = results + "    Hostname is FQDN:\n        Your server\'s IP address " + address + " is not resolvable to '" + fqdn1 + "' instead script got '" + fqdn2.strip('.') + "'. This is required in order to prevent certain classes of attack.\n"
-
-
 #Supported OS
 
     good_os = False
@@ -105,6 +86,38 @@ def test_basic():
     else:
         print("    Supported OS...                                " + bcolors.WARNING + "[WARN]" + bcolors.ENDC + "")
         results = results + "    Supported OS:\n        You are not running a supported OS. Moonshot may not work as indicated in the documentation.\n"
+
+#Check for prerequisites (like dig etc)
+    fail_basic_req = (bin_hostname == "" or bin_dig == "" or bin_grep == "")
+    if (is_rhel):
+         if (fail_basic_req or bin_yum == "" or bin_rpm == ""):
+             print("    Some prerequisites couldn\'t be found.          " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+             results = results + "    Prerequisites for this test:\n        One or more prerequisites for this test couldn\'t be found. Please check that dig, hostname, grep, yum and rpm are installed.\n"
+             sys.exit()
+    else:
+         if (fail_basic_req or bin_aptcache == "" or bin_aptget == "" or bin_aptkey == ""):
+             print("    Some prerequisites couldn\'t be found.          " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+             results = results + "    Prerequisites for this test:\n        One or more prerequisites for this test couldn\'t be found. Please check that dig, hostname, grep, apt-get, apt-key and apt-cache are installed.\n"
+             sys.exit()
+
+
+#Hostname is FQDN
+
+    cmd = os.popen("%s -f" % bin_hostname)
+    fqdn1 = (cmd.read()).strip()
+    cmd = os.popen("%s %s +short" % (bin_dig, fqdn1))
+    address = (cmd.read()).strip()
+    if len(address) == 0:
+         print("    Hostname is FQDN...                            " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+         results = results + "    Hostname is FQDN:\n        Your server\'s hostname ("+fqdn1+") is not fully resolvable. This is required in order to prevent certain classes of attack.\n"
+    else:      
+        cmd = os.popen("%s -x %s +short" % (bin_dig, address))
+        fqdn2 = (cmd.read()).strip()
+        if fqdn1 + "." == fqdn2:
+            print("    Hostname is FQDN...                            " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
+        else:
+            print("    Hostname is FQDN...                            " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+            results = results + "    Hostname is FQDN:\n        Your server\'s IP address " + address + " is not resolvable to '" + fqdn1 + "' instead script got '" + fqdn2.strip('.') + "'. This is required in order to prevent certain classes of attack.\n"
 
 
 #Moonshot repository configuration
@@ -148,11 +161,12 @@ def test_basic():
 #Current version
 
     if (is_rhel == True):
-        cmd = os.popen("%s -q --assumeno install moonshot-gss-eap 2>&1" % bin_yum)
+        cmd = os.popen("%s --assumeno install moonshot-gss-eap 2>&1" % bin_yum)
     else:
         cmd = os.popen("%s --assume-no install moonshot-gss-eap" % bin_aptget)
     cmd = cmd.read()
-    if (cmd.find("0 newly installed") >= 0) or (cmd.find("0 to newly install") >= 0) or (cmd.find("already the newest version") >= 0) or (cmd.find("already installed and latest version") >= 0):
+    if (cmd.find("0 newly installed") >= 0) or (cmd.find("0 to newly install") >= 0) or (cmd.find("already the newest version") >= 0) \
+        or (cmd.find("already installed and latest version") >= 0) or ((cmd.find("Nothing to do") >= 0) and (cmd.find("Error: Nothing to do") < 0)):
         print("    Moonshot current version...                    " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
     else:
         print("    Moonshot current version...                    " + bcolors.WARNING + "[WARN]" + bcolors.ENDC + "\n\n")
