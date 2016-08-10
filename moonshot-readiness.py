@@ -258,27 +258,13 @@ def test_rp_proxy():
     raduserhome = cmd.read().strip()
 
     if (raduserhome == '~radiusd' or raduserhome == '~freerad'):
-        print("    Trust Identity...                              " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
-        results = results + "    Trust Identity:\n        FreeRADIUS does not appear to be installed, or no home directory for the FreeRADIUS user could be found. You will not be able to authenticate to the trust router.\n"
+        print("    Trust Identity (FreeRADIUS)...                 " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
+        results = results + "    Trust Identity (FreeRADIUS):\n        FreeRADIUS does not appear to be installed, or no home directory for the FreeRADIUS user could be found. You will not be able to authenticate to the trust router.\n"
     elif os.path.isfile(raduserhome + '/.local/share/moonshot-ui/identities.txt') == True:
-        print("    Trust Identity...                              " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
+        print("    Trust Identity (FreeRADIUS)...                 " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
     else:
-        print("    Trust Identity...                              " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
-        results = results + "    Trust Identity:\n        No trust identity could be found for the FreeRADIUS user account. You will not be able to authenticate to the trust router.\n"
-
-
-#Trust Identity for TIDS
-    cmd = os.popen('%s ~trustrouter' % bin_echo)
-    trustrouterhome = cmd.read().strip()
-
-    if (trustrouterhome == '~trustrouter'):
-        print("    Trust Identity...                              " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
-        results = results + "    Trust Identity:\n        There either is no trusrouter user or no home directory for the trustrouter user could be found. You will not be able to authenticate to the trust router.\n"
-    elif os.path.isfile(trustrouterhome + '/.local/share/moonshot-ui/identities.txt') == True:
-        print("    Trust Identity...                              " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
-    else:
-        print("    Trust Identity...                              " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
-        results = results + "    Trust Identity:\n        No trust identity could be found for the trustrouter user account. You will not be able to authenticate to the trust router.\n"
+        print("    Trust Identity (FreeRADIUS)...                 " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
+        results = results + "    Trust Identity (FreeRADIUS):\n        No trust identity could be found for the FreeRADIUS user account. You will not be able to authenticate to the trust router.\n"
 
 
 #=================================  TESTS IDP  ===========================================
@@ -343,13 +329,27 @@ def test_idp():
     raduserhome = cmd.read().strip()
 
     if (raduserhome == '~radiusd' or raduserhome == '~freerad'):
-        print("    Trust Identity...                              " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
-        results = results + "    Trust Identity:\n        FreeRADIUS does not appear to be installed, or no home directory for the FreeRADIUS user could be found. You will not be able to authenticate to the trust router.\n"
+        print("    Trust Identity (FreeRADIUS)...                 " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
+        results = results + "    Trust Identity (FreeRADIUS):\n        FreeRADIUS does not appear to be installed, or no home directory for the FreeRADIUS user could be found. You will not be able to authenticate to the trust router.\n"
     elif os.path.isfile(raduserhome + '/.local/share/moonshot-ui/identities.txt') == True:
-        print("    Trust Identity...                              " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
+        print("    Trust Identity (FreeRADIUS)...                 " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
     else:
-        print("    Trust Identity...                              " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
-        results = results + "    Trust Identity:\n        No trust identity could be found for the FreeRADIUS user account. You will not be able to authenticate to the trust router.\n"
+        print("    Trust Identity (FreeRADIUS)...                 " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
+        results = results + "    Trust Identity (FreeRADIUS):\n        No trust identity could be found for the FreeRADIUS user account. You will not be able to authenticate to the trust router.\n"
+
+
+#Trust Identity for TIDS
+    cmd = os.popen('%s ~trustrouter' % bin_echo)
+    trustrouterhome = cmd.read().strip()
+
+    if (trustrouterhome == '~trustrouter'):
+        print("    Trust Identity (Trust Router)...               " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
+        results = results + "    Trust Identity (Trust Router):\n        There either is no trustrouter user or no home directory for the trustrouter user could be found. You will not be able to authenticate to the trust router.\n"
+    elif os.path.isfile(trustrouterhome + '/.local/share/moonshot-ui/identities.txt') == True:
+        print("    Trust Identity (Trust Router)...               " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
+    else:
+        print("    Trust Identity (Trust Router)...               " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
+        results = results + "    Trust Identity (Trust Router):\n        No trust identity could be found for the trustrouter user account. You will not be able to authenticate to the trust router.\n"
 
 
 
