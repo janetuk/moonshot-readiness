@@ -24,6 +24,8 @@ cmd = os.popen('which dig 2>/dev/null')
 bin_dig = (cmd.read()).strip()
 cmd = os.popen('which grep 2>/dev/null')
 bin_grep = (cmd.read()).strip()
+cmd = os.popen('which echo 2>/dev/null')
+bin_echo = (cmd.read()).strip()
 # RHEL specific
 cmd = os.popen('which yum 2>/dev/null')
 bin_yum = (cmd.read()).strip()
@@ -44,6 +46,7 @@ bin_aptget = (cmd.read()).strip()
 
 def test_basic():
     global results
+    global is_rhel
     print("\n\nTesting task basic...")
 
 #Supported OS
@@ -88,16 +91,16 @@ def test_basic():
         results = results + "    Supported OS:\n        You are not running a supported OS. Moonshot may not work as indicated in the documentation.\n"
 
 #Check for prerequisites (like dig etc)
-    fail_basic_req = (bin_hostname == "" or bin_dig == "" or bin_grep == "")
+    fail_basic_req = (bin_hostname == "" or bin_dig == "" or bin_grep == "" or bin_echo == "")
     if (is_rhel):
          if (fail_basic_req or bin_yum == "" or bin_rpm == ""):
              print("    Some prerequisites couldn\'t be found.          " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
-             results = results + "    Prerequisites for this test:\n        One or more prerequisites for this test couldn\'t be found. Please check that dig, hostname, grep, yum and rpm are installed.\n"
+             results = results + "    Prerequisites for this test:\n        One or more prerequisites for this test couldn\'t be found. Please check that dig, hostname, grep, echo, yum and rpm are installed.\n"
              sys.exit()
     else:
          if (fail_basic_req or bin_aptcache == "" or bin_aptget == "" or bin_aptkey == ""):
              print("    Some prerequisites couldn\'t be found.          " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
-             results = results + "    Prerequisites for this test:\n        One or more prerequisites for this test couldn\'t be found. Please check that dig, hostname, grep, apt-get, apt-key and apt-cache are installed.\n"
+             results = results + "    Prerequisites for this test:\n        One or more prerequisites for this test couldn\'t be found. Please check that dig, hostname, grep, echo, apt-get, apt-key and apt-cache are installed.\n"
              sys.exit()
 
 
@@ -139,7 +142,7 @@ def test_basic():
     if (is_rhel == True):
         cmd = os.popen("%s %s" % (bin_rpm, " -q gpg-pubkey --qf '%{version} %{summary}\n'"))
     else:
-        cmd = os.popen("%s --keyring /etc/apt/trusted.gpg list" % bin_aptkey)
+        cmd = os.popen('%s --keyring /etc/apt/trusted.gpg list' % bin_aptkey)
     cmd = cmd.read()
     key1 = False
     key2 = False
@@ -161,9 +164,9 @@ def test_basic():
 #Current version
 
     if (is_rhel == True):
-        cmd = os.popen("%s --assumeno install moonshot-gss-eap 2>&1" % bin_yum)
+        cmd = os.popen('%s --assumeno install moonshot-gss-eap 2>&1' % bin_yum)
     else:
-        cmd = os.popen("%s --assume-no install moonshot-gss-eap" % bin_aptget)
+        cmd = os.popen('%s --assume-no install moonshot-gss-eap' % bin_aptget)
     cmd = cmd.read()
     if (cmd.find("0 newly installed") >= 0) or (cmd.find("0 to newly install") >= 0) or (cmd.find("already the newest version") >= 0) \
         or (cmd.find("already installed and latest version") >= 0) or ((cmd.find("Nothing to do") >= 0) and (cmd.find("Error: Nothing to do") < 0)):
@@ -185,9 +188,7 @@ def test_rp():
 
 
 #/etc/radsec.conf
-
-    cmd = os.path.isfile("/etc/radsec.conf")
-    if cmd == True:
+    if os.path.isfile("/etc/radsec.conf") == True:
         print("    radsec.conf...                                 " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
     else:
         print("    radsec.conf...                                 " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
@@ -231,29 +232,53 @@ def test_rp_proxy():
 
     root = False
     freerad = False
+    trustrouter = False
     if os.path.isfile("/etc/moonshot/flatstore-users") == True:
         fil = open("/etc/moonshot/flatstore-users", "r")
         for line in fil:
             if line.strip() == "root":
                 root = True
-            if line.strip() == "freerad":
+            elif line.strip() == "trustrouter":
+                trustrouter = True
+            elif (line.strip() == "freerad" or line.strip() == "radiusd"):
                 freerad = True
         fil.close()
-    if root == True and freerad == True:
+    if root == True and freerad == True and trustrouter == True:
         print("    Flatstore-users...                             " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
     else:
         print("    Flatstore-users...                             " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
         results = results + "    Flatstore-users:\n        /etc/moonshot/flatstore-users could not be found, or does not contain all the user accounts it needs to. You may be unable to authenticate to the trust router.\n"
         
 
-#Trust Identity
+#Trust Identity for FreeRADIUS
+    if (is_rhel == True):
+        cmd = os.popen('%s ~radiusd' % bin_echo)
+    else:
+        cmd = os.popen('%s ~freerad' % bin_echo)
+    raduserhome = cmd.read().strip()
 
-    if os.path.isfile("/etc/freeradius/.local/share/moonshot-ui/identities.txt") == True:
+    if (raduserhome == '~radiusd' or raduserhome == '~freerad'):
+        print("    Trust Identity...                              " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
+        results = results + "    Trust Identity:\n        FreeRADIUS does not appear to be installed, or no home directory for the FreeRADIUS user could be found. You will not be able to authenticate to the trust router.\n"
+    elif os.path.isfile(raduserhome + '/.local/share/moonshot-ui/identities.txt') == True:
         print("    Trust Identity...                              " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
     else:
         print("    Trust Identity...                              " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
-        results = results + "    Trust Identity:\n        No trust identity could be found for the freeradius user account. You will not be able to authenticate to the trust router.\n"
+        results = results + "    Trust Identity:\n        No trust identity could be found for the FreeRADIUS user account. You will not be able to authenticate to the trust router.\n"
 
+
+#Trust Identity for TIDS
+    cmd = os.popen('%s ~trustrouter' % bin_echo)
+    trustrouterhome = cmd.read().strip()
+
+    if (trustrouterhome == '~trustrouter'):
+        print("    Trust Identity...                              " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
+        results = results + "    Trust Identity:\n        There either is no trusrouter user or no home directory for the trustrouter user could be found. You will not be able to authenticate to the trust router.\n"
+    elif os.path.isfile(trustrouterhome + '/.local/share/moonshot-ui/identities.txt') == True:
+        print("    Trust Identity...                              " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
+    else:
+        print("    Trust Identity...                              " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
+        results = results + "    Trust Identity:\n        No trust identity could be found for the trustrouter user account. You will not be able to authenticate to the trust router.\n"
 
 
 #=================================  TESTS IDP  ===========================================
@@ -262,6 +287,7 @@ def test_rp_proxy():
 
 def test_idp():
     global results
+    global is_rhel
     test_rp()
     print("Testing task idp...")
 
@@ -292,28 +318,38 @@ def test_idp():
 
     root = False
     freerad = False
+    trustrouter = False
     if os.path.isfile("/etc/moonshot/flatstore-users") == True:
         fil = open("/etc/moonshot/flatstore-users", "r")
         for line in fil:
             if line.strip() == "root":
                 root = True
-            if line.strip() == "freerad":
+            elif line.strip() == "trustrouter":
+                trustrouter = True
+            elif (line.strip() == "freerad" or line.strip() == "radiusd"):
                 freerad = True
         fil.close()
-    if root == True and freerad == True:
+    if root == True and freerad == True and trustrouter == True:
         print("    Flatstore-users...                             " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
     else:
         print("    Flatstore-users...                             " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
         results = results + "    Flatstore-users:\n        /etc/moonshot/flatstore-users could not be found, or does not contain all the user accounts it needs to. You may be unable to authenticate to the trust router.\n"
+        
+#Trust Identity for FreeRADIUS
+    if (is_rhel == True):
+        cmd = os.popen('%s ~radiusd' % bin_echo)
+    else:
+        cmd = os.popen('%s ~freerad' % bin_echo)
+    raduserhome = cmd.read().strip()
 
-
-#Trust Identity
-
-    if os.path.isfile("/etc/freeradius/.local/share/moonshot-ui/identities.txt") == True:
+    if (raduserhome == '~radiusd' or raduserhome == '~freerad'):
+        print("    Trust Identity...                              " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
+        results = results + "    Trust Identity:\n        FreeRADIUS does not appear to be installed, or no home directory for the FreeRADIUS user could be found. You will not be able to authenticate to the trust router.\n"
+    elif os.path.isfile(raduserhome + '/.local/share/moonshot-ui/identities.txt') == True:
         print("    Trust Identity...                              " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
     else:
         print("    Trust Identity...                              " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
-        results = results + "    Trust Identity:\n        No trust identity could be found for the freeradius user account. You will not be able to authenticate to the trust router.\n"
+        results = results + "    Trust Identity:\n        No trust identity could be found for the FreeRADIUS user account. You will not be able to authenticate to the trust router.\n"
 
 
 
@@ -323,22 +359,26 @@ def test_idp():
 
 def test_client():
     global results
+    global is_rhel
     test_basic()
     print("Testing task client...")
 
 
 #gss/mech
+    if is_rhel == True:
+        gss_mech = '/etc/gss/mech'
+    else:
+        gss_mech = '/etc/gss/mech.d/moonshot-gss-eap.conf'
 
-    cmd = os.path.isfile("/usr/etc/gss/mech") 
-    if cmd == True:
-        mode = oct(stat.S_IMODE(os.stat("/usr/etc/gss/mech")[stat.ST_MODE]))
+    if os.path.isfile(gss_mech) == True:
+        mode = oct(stat.S_IMODE(os.stat(gss_mech)[stat.ST_MODE]))
         if mode.strip() == "0644":
             
             string1 = "eap-aes128 1.3.6.1.5.5.15.1.1.17 mech_eap.so" 
-            string2 = "eap-aes128 1.3.6.1.5.5.15.1.1.17 mech_eap.so"
+            string2 = "eap-aes256 1.3.6.1.5.5.15.1.1.18 mech_eap.so"
             s1 = False
             s2 = False
-            fil = open("/usr/etc/gss/mech","r")
+            fil = open(gss_mech,"r")
             for line in fil:
                 words=re.split(r'[ \t]+', line)
                 i = 0
