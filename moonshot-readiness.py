@@ -38,6 +38,8 @@ cmd = os.popen('which apt-key 2>/dev/null')
 bin_aptkey = (cmd.read()).strip()
 cmd = os.popen('which apt-get 2>/dev/null')
 bin_aptget = (cmd.read()).strip()
+cmd = os.popen('which dpkg 2>/dev/null')
+bin_dpkg = (cmd.read()).strip()
 
 
 #=================================  TESTS BASIC  ===========================================
@@ -98,9 +100,9 @@ def test_basic():
              results = results + "    Prerequisites for this test:\n        One or more prerequisites for this test couldn\'t be found. Please check that dig, hostname, grep, echo, yum and rpm are installed.\n"
              sys.exit()
     else:
-         if (fail_basic_req or bin_aptcache == "" or bin_aptget == "" or bin_aptkey == ""):
+         if (fail_basic_req or bin_aptcache == "" or bin_aptget == "" or bin_aptkey == "" or bin_dpkg == ""):
              print("    Some prerequisites couldn\'t be found.          " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
-             results = results + "    Prerequisites for this test:\n        One or more prerequisites for this test couldn\'t be found. Please check that dig, hostname, grep, echo, apt-get, apt-key and apt-cache are installed.\n"
+             results = results + "    Prerequisites for this test:\n        One or more prerequisites for this test couldn\'t be found. Please check that dig, hostname, grep, echo, apt-get, apt-key, apt-cache and dpkg are installed.\n"
              sys.exit()
 
 
@@ -413,21 +415,38 @@ def test_ssh_client():
 
 #GSSAPIAuthentication enabled
 
-    cmd = os.popen("augtool print /files/etc/ssh/ssh_config/Host/GSSAPIAuthentication")
-    cmd = cmd.read()
-    if cmd.strip() == "/files/etc/ssh/ssh_config/Host/GSSAPIAuthentication = \"yes\"":
-        print("    GSSAPIAuthentication enabled...                " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
+    num = 0
+    cmd = os.popen("%s %s" % (bin_grep, " GSSAPIAuthentication /etc/ssh/ssh_config |grep -v \#"))
+    cmd = (cmd.read()).strip()
+    if len(cmd) > 0:
+        lines = cmd.split('\n')
+        for line in lines:
+            if (line.lower() == 'gssapiauthentication yes'):
+                num = num + 1
+        if num > 0:
+            print("    GSSAPIAuthentication enabled...                " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
+        else:
+            print("    GSSAPIAuthentication enabled...                " + bcolors.FAIL + "[WARN]" + bcolors.ENDC + "")
+            results = results + "    GSSAPIAuthentication enabled:\n        GSSAPIAuthentication must be enabled for Moonshot to function when using SSH.\n"
     else:
-        print("    GSSAPIAuthentication enabled...                " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+        print("    GSSAPIAuthentication enabled...                " + bcolors.FAIL + "[WARN]" + bcolors.ENDC + "")
         results = results + "    GSSAPIAuthentication enabled:\n        GSSAPIAuthentication must be enabled for Moonshot to function when using SSH.\n"
-
 
 #GSSAPIKeyExchange enabled
 
-    cmd = os.popen("augtool print /files/etc/ssh/ssh_config/Host/GSSAPIKeyExchange")
-    cmd = cmd.read()
-    if cmd.strip() == "/files/etc/ssh/ssh_config/Host/GSSAPIKeyExchange = \"yes\"":
-        print("    GSSAPIKeyExchange enabled...                   " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
+    num = 0
+    cmd = os.popen("%s %s" % (bin_grep, " GSSAPIKeyExchange /etc/ssh/ssh_config |grep -v \#"))
+    cmd = (cmd.read()).strip()
+    if len(cmd) > 0:
+        lines = cmd.split('\n')
+        for line in lines:
+            if (line.lower() == 'gssapikeyexchange yes'):
+                num = num + 1
+        if num > 0:
+            print("    GSSAPIKeyExchange enabled...                   " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
+        else:
+            print("    GSSAPIKeyExchange enabled...                   " + bcolors.WARNING + "[WARN]" + bcolors.ENDC + "\n\n")
+            results = results + "    GSSAPIKeyExchange enabled:\n        GSSAPIKeyExchange should be enabled for Moonshot to function correctly when using SSH.\n"
     else:
         print("    GSSAPIKeyExchange enabled...                   " + bcolors.WARNING + "[WARN]" + bcolors.ENDC + "\n\n")
         results = results + "    GSSAPIKeyExchange enabled:\n        GSSAPIKeyExchange should be enabled for Moonshot to function correctly when using SSH.\n"
@@ -506,3 +525,4 @@ else:
     if results == "=========================================================================\n\nTest complete, failed tests:\n":
         results = "=========================================================================\n\nTest complete, 100% is OKAY\n\n"
     print results
+    
