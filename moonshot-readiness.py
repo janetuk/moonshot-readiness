@@ -460,29 +460,84 @@ def test_ssh_client():
 def test_ssh_server():
     global results
     test_rp()
-    print("Testing task ssh-client...")
+    print("Testing task ssh-server...")
 
+    is_openssh_installed = False
+
+    cmd = os.popen('/usr/sbin/sshd -V 2>&1 |grep OpenSSH')
+    cmd = (cmd.read()).strip()
+    is_openssh_installed = (len(cmd) > 0)
+
+    if (is_openssh_installed == False):
+        print("    Task ssh-server...                             " + bcolors.OKGREEN + "[FAIL]" + bcolors.ENDC + "\n\n")
+        results = results + "    Task ssh-server:\n        You must have OpenSSH installed before attempting this test.\n"
+
+    else:
+        openssh = (((cmd.split()[0]).split('_')[1]).split('p')[0]).split('.')
+        needs_privsepoff = (int(openssh[0]) < 6) or (int(openssh[0]) == 6 and int(openssh[1]) < 6)
+
+
+#GSSAPIAuthentication enabled
+
+        num = 0
+        cmd = os.popen("%s %s" % (bin_grep, " GSSAPIAuthentication /etc/ssh/sshd_config |grep -v \#"))
+        cmd = (cmd.read()).strip()
+        if len(cmd) > 0:
+            lines = cmd.split('\n')
+            for line in lines:
+                if (line.lower() == 'gssapiauthentication yes'):
+                    num = num + 1
+            if num > 0:
+                print("    GSSAPIAuthentication enabled...                " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
+            else:
+                print("    GSSAPIAuthentication enabled...                " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+                results = results + "    GSSAPIAuthentication enabled:\n        GSSAPIAuthentication must be enabled for Moonshot to function when using SSH.\n"
+        else:
+            print("    GSSAPIAuthentication enabled...                " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+            results = results + "    GSSAPIAuthentication enabled:\n        GSSAPIAuthentication must be enabled for Moonshot to function when using SSH.\n"
+
+
+#GSSAPIKeyExchange enabled
+
+        num = 0
+        cmd = os.popen("%s %s" % (bin_grep, " GSSAPIKeyExchange /etc/ssh/sshd_config |grep -v \#"))
+        cmd = (cmd.read()).strip()
+        if len(cmd) > 0:
+            lines = cmd.split('\n')
+            for line in lines:
+                if (line.lower() == 'gssapikeyexchange yes'):
+                    num = num + 1
+            if num > 0:
+                print("    GSSAPIKeyExchange enabled...                   " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
+            else:
+                print("    GSSAPIKeyExchange enabled...                   " + bcolors.WARNING + "[FAIL]" + bcolors.ENDC + "")
+                results = results + "    GSSAPIKeyExchange enabled:\n        GSSAPIKeyExchange must be enabled for Moonshot to function correctly when using SSH.\n"
+        else:
+            print("    GSSAPIKeyExchange enabled...                   " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+            results = results + "    GSSAPIKeyExchange enabled:\n        GSSAPIKeyExchange must be enabled for Moonshot to function correctly when using SSH.\n"
 
 #Privilege separation disabled
 
-    cmd = os.popen("augtool print /files/etc/ssh/sshd_config/UsePrivilegeSeparation")
-    cmd = cmd.read()
-    if cmd.strip() == "/files/etc/ssh/sshd_config/UsePrivilegeSeparation = \"no\"":
-        print("    Privilege separation disabled...               " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
-    else:
-        print("    Privilege separation disabled...               " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
-        results = results + "    Privilege separation disabled:\n        Moonshot currently requires that OpenSSH server has privilege separation disabled.\n"
-
-
-#GSSAPIAuthentication
-
-    cmd = os.popen("augtool print /files/etc/ssh/sshd_config/GSSAPIAuthentication")
-    cmd = cmd.read()
-    if cmd.strip() == "/files/etc/ssh/sshd_config/GSSAPIAuthentication = \"yes\"":
-        print("    GSSAPIAuthentication...                        " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
-    else:
-        print("    GSSAPIAuthentication...                        " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
-        results = results + "    GSSAPIAuthentication:\n        GSSAPIAuthentication must be enabled for Moonshot to function when using SSH.\n"
+        if (needs_privsepoff == True):
+            num = 0
+            cmd = os.popen("%s %s" % (bin_grep, " UsePrivilegeSeparation /etc/ssh/sshd_config |grep -v \#"))
+            cmd = (cmd.read()).strip()
+            if len(cmd) > 0:
+                lines = cmd.split('\n')
+                for line in lines:
+                    if (line.lower() == 'useprivilegeseparation no'):
+                        num = num + 1
+                if num > 0:
+                    print("    Privilege separation...                        " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
+                else:
+                    print("    Privilege separation...                        " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
+                    results = results + "    Privilege separation:\n        Moonshot currently requires that OpenSSH server has privilege separation disabled.\n\n"
+            else:
+                print("    Privilege separation...                        " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+                results = results + "    Privilege separation:\n        Moonshot currently requires that OpenSSH server has privilege separation disabled.\n\n"
+        else:
+            print("    Privilege separation...                        " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
+            results = results + "    Privilege separation:\n        Moonshot no longer requires privilege separation to be enabled on this version of OpenSSH server.\n\n"
 
 
 
@@ -525,4 +580,3 @@ else:
     if results == "=========================================================================\n\nTest complete, failed tests:\n":
         results = "=========================================================================\n\nTest complete, 100% is OKAY\n\n"
     print results
-    
