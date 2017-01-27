@@ -43,7 +43,9 @@ cmd = os.popen('which dpkg 2>/dev/null')
 bin_dpkg = (cmd.read()).strip()
 
 
+
 #=================================  PRINT OKAY/WARN/FAIL BANNER  =============================
+
 
 
 def print_summary(colour, text_string, endl):
@@ -423,43 +425,53 @@ def test_ssh_client():
     test_client()
     print("Testing task ssh-client...")
 
+    cmd = os.popen('which ssh 2>/dev/null')
+    cmd = (cmd.read()).strip()
+    is_ssh_installed = (len(cmd) > 0)
+
+    if (is_ssh_installed == False):
+        print_summary(bcolors.FAIL, "Task ssh-client...", "\n\n")
+        results = results + INDENT + "Task ssh-client:\n        You must have OpenSSH installed before attempting this test.\n"
+
+    else:
+
 #GSSAPIAuthentication enabled
 
-    num = 0
-    cmd = os.popen("%s %s" % (bin_grep, " GSSAPIAuthentication /etc/ssh/ssh_config |grep -v \#"))
-    cmd = (cmd.read()).strip()
-    if len(cmd) > 0:
-        lines = cmd.split('\n')
-        for line in lines:
-            if (line.lower() == 'gssapiauthentication yes'):
-                num = num + 1
-        if num > 0:
-            print_summary(bcolors.OKGREEN, "GSSAPIAuthentication enabled...", "")
+        num = 0
+        cmd = os.popen("%s %s" % (bin_grep, " GSSAPIAuthentication /etc/ssh/ssh_config |grep -v \#"))
+        cmd = (cmd.read()).strip()
+        if len(cmd) > 0:
+            lines = cmd.split('\n')
+            for line in lines:
+                if (line.lower() == 'gssapiauthentication yes'):
+                    num = num + 1
+            if num > 0:
+                print_summary(bcolors.OKGREEN, "GSSAPIAuthentication enabled...", "")
+            else:
+                print_summary(bcolors.FAIL, "GSSAPIAuthentication enabled...", "")
+                results = results + INDENT + "GSSAPIAuthentication enabled:\n        GSSAPIAuthentication must be enabled for Moonshot to function when using SSH.\n"
         else:
             print_summary(bcolors.FAIL, "GSSAPIAuthentication enabled...", "")
             results = results + INDENT + "GSSAPIAuthentication enabled:\n        GSSAPIAuthentication must be enabled for Moonshot to function when using SSH.\n"
-    else:
-        print_summary(bcolors.FAIL, "GSSAPIAuthentication enabled...", "")
-        results = results + INDENT + "GSSAPIAuthentication enabled:\n        GSSAPIAuthentication must be enabled for Moonshot to function when using SSH.\n"
 
 #GSSAPIKeyExchange enabled
 
-    num = 0
-    cmd = os.popen("%s %s" % (bin_grep, " GSSAPIKeyExchange /etc/ssh/ssh_config |grep -v \#"))
-    cmd = (cmd.read()).strip()
-    if len(cmd) > 0:
-        lines = cmd.split('\n')
-        for line in lines:
-            if (line.lower() == 'gssapikeyexchange yes'):
-                num = num + 1
-        if num > 0:
-            print_summary(bcolors.OKGREEN, "GSSAPIKeyExchange enabled...", "\n\n")
+        num = 0
+        cmd = os.popen("%s %s" % (bin_grep, " GSSAPIKeyExchange /etc/ssh/ssh_config |grep -v \#"))
+        cmd = (cmd.read()).strip()
+        if len(cmd) > 0:
+            lines = cmd.split('\n')
+            for line in lines:
+                if (line.lower() == 'gssapikeyexchange yes'):
+                    num = num + 1
+            if num > 0:
+                print_summary(bcolors.OKGREEN, "GSSAPIKeyExchange enabled...", "\n\n")
+            else:
+                print_summary(bcolors.FAIL, "GSSAPIKeyExchange enabled...", "\n\n")
+                results = results + INDENT + "GSSAPIKeyExchange enabled:\n        GSSAPIKeyExchange should be enabled for Moonshot to function correctly when using SSH.\n"
         else:
             print_summary(bcolors.FAIL, "GSSAPIKeyExchange enabled...", "\n\n")
             results = results + INDENT + "GSSAPIKeyExchange enabled:\n        GSSAPIKeyExchange should be enabled for Moonshot to function correctly when using SSH.\n"
-    else:
-        print_summary(bcolors.FAIL, "GSSAPIKeyExchange enabled...", "\n\n")
-        results = results + INDENT + "GSSAPIKeyExchange enabled:\n        GSSAPIKeyExchange should be enabled for Moonshot to function correctly when using SSH.\n"
 
 
 
@@ -471,8 +483,6 @@ def test_ssh_server():
     global results
     test_rp()
     print("Testing task ssh-server...")
-
-    is_openssh_installed = False
 
     cmd = os.popen('/usr/sbin/sshd -V 2>&1 |grep OpenSSH')
     cmd = (cmd.read()).strip()
