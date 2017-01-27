@@ -43,6 +43,23 @@ cmd = os.popen('which dpkg 2>/dev/null')
 bin_dpkg = (cmd.read()).strip()
 
 
+#=================================  PRINT OKAY/WARN/FAIL BANNER  =============================
+
+
+def print_summary(colour, text_string, endl):
+
+    colour_tag = ""
+    if (colour == bcolors.OKBLUE or colour == bcolors.OKGREEN):
+        colour_tag = "[OKAY]"
+    elif (colour == bcolors.WARNING):
+        colour_tag = "[WARN]"
+    elif (colour == bcolors.FAIL):
+        colour_tag = "[FAIL]"
+
+    print(INDENT + text_string.ljust(47) + colour + colour_tag + bcolors.ENDC + endl)
+
+
+
 #=================================  TESTS BASIC  ===========================================
 
 
@@ -78,7 +95,7 @@ def test_basic():
         rel_ver = name.rsplit(" ", 1)[1]
         rel_os = name.split(" ")[0]
 
-    # now for the OS checking: We support Debian, Ubuntu, RHEL, CentOS, Scientific Linux
+    #OS checking: We support Debian, Ubuntu, RHEL, CentOS, Scientific Linux
     if (rel_os == 'debian'):
         good_os = (rel_ver == '7' or rel_ver == '8')
     elif (rel_os == 'ubuntu'):
@@ -88,24 +105,24 @@ def test_basic():
         good_os = (rel_ver == '6' or rel_ver == '7')
 
     if good_os == True:
-        print(INDENT + "Supported OS...".ljust(47) + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
+        print_summary(bcolors.OKGREEN, "Supported OS...", "")
     else:
-        print(INDENT + "Supported OS...".ljust(47) + bcolors.WARNING + "[WARN]" + bcolors.ENDC + "")
+        print_summary(bcolors.WARNING, "Supported OS...", "")
         results = results + INDENT + "Supported OS:\n        You are not running a supported OS. Moonshot may not work as indicated in the documentation.\n"
 
 #Check for prerequisites (like dig etc)
+
     fail_basic_req = (bin_hostname == "" or bin_dig == "" or bin_grep == "" or bin_echo == "")
     if (is_rhel):
          if (fail_basic_req or bin_yum == "" or bin_rpm == ""):
-             print(INDENT + "Some prerequisites couldn\'t be found.".ljust(47) + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+             print_summary(bcolors.FAIL, "Some prerequisites couldn\'t be found.", "")
              results = results + INDENT + "Prerequisites for this test:\n        One or more prerequisites for this test couldn\'t be found. Please check that dig, hostname, grep, echo, yum and rpm are installed.\n"
              sys.exit()
     else:
          if (fail_basic_req or bin_aptcache == "" or bin_aptget == "" or bin_aptkey == "" or bin_dpkg == ""):
-             print(INDENT + "Some prerequisites couldn\'t be found.".ljust(47) + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+             print_summary(bcolors.FAIL, "Some prerequisites couldn\'t be found.", "")
              results = results + INDENT + "Prerequisites for this test:\n        One or more prerequisites for this test couldn\'t be found. Please check that dig, hostname, grep, echo, apt-get, apt-key, apt-cache and dpkg are installed.\n"
              sys.exit()
-
 
 #Hostname is FQDN
 
@@ -114,17 +131,16 @@ def test_basic():
     cmd = os.popen("%s %s +short" % (bin_dig, fqdn1))
     address = (cmd.read()).strip()
     if len(address) == 0:
-         print(INDENT + "Hostname is FQDN...".ljust(47) + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+         print_summary(bcolors.FAIL, "Hostname is FQDN...", "")
          results = results + INDENT + "Hostname is FQDN:\n        Your server\'s hostname ("+fqdn1+") is not fully resolvable. This is required in order to prevent certain classes of attack.\n"
     else:      
         cmd = os.popen("%s -x %s +short" % (bin_dig, address))
         fqdn2 = (cmd.read()).strip()
         if fqdn1 + "." == fqdn2:
-            print(INDENT + "Hostname is FQDN...".ljust(47) + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
+            print_summary(bcolors.OKGREEN, "Hostname is FQDN...", "")
         else:
-            print(INDENT + "Hostname is FQDN...".ljust(47) + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+            print_summary(bcolors.FAIL, "Hostname is FQDN...", "")
             results = results + INDENT + "Hostname is FQDN:\n        Your server\'s IP address " + address + " is not resolvable to '" + fqdn1 + "' instead script got '" + fqdn2.strip('.') + "'. This is required in order to prevent certain classes of attack.\n"
-
 
 #Moonshot repository configuration
 
@@ -134,11 +150,10 @@ def test_basic():
         cmd = os.popen('%s search -n "moonshot-gss-eap"' % bin_aptcache)
     cmd_result = cmd.read()
     if (cmd_result.lower().find('moonshot-gss-eap') >= 0):
-        print(INDENT + "Moonshot repositories configured...".ljust(47) + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
+        print_summary(bcolors.OKGREEN, "Moonshot repositories configured...", "")
     else:
-        print(INDENT + "Moonshot repositories configured...".ljust(47) + bcolors.WARNING + "[WARN]" + bcolors.ENDC + "")
+        print_summary(bcolors.WARNING, "Moonshot repositories configured...", "")
         results = results + INDENT + "Moonshot repositories configured:\n        The Moonshot repositories do not appear to exist on this system. You will not be able to upgrade Moonshot using your distribution\'s package manager.\n"
-
 
 #Moonshot Signing Key
 
@@ -158,13 +173,12 @@ def test_basic():
             key2 = True
         i = i + 1
     if (key1 == True or key2 == True):
-        print(INDENT + "Moonshot Signing Key...".ljust(47) + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
+        print_summary(bcolors.OKGREEN, "Moonshot Signing Key...", "")
     else:
-        print(INDENT + "Moonshot Signing Key...".ljust(47) + bcolors.WARNING + "[WARN]" + bcolors.ENDC + "")
+        print_summary(bcolors.WARNING, "Moonshot Signing Key...", "")
         results = results + INDENT + "Moonshot Signing Key:\n        The Moonshot repository key is not installed, you will have difficulty updating packages.\n"
 
-
-#Current version
+#Current Moonshot software
 
     if (is_rhel == True):
         cmd = os.popen('%s --assumeno install moonshot-gss-eap 2>&1' % bin_yum)
@@ -173,9 +187,9 @@ def test_basic():
     cmd = cmd.read()
     if (cmd.find("0 newly installed") >= 0) or (cmd.find("0 to newly install") >= 0) or (cmd.find("already the newest version") >= 0) \
         or (cmd.find("already installed and latest version") >= 0) or ((cmd.find("Nothing to do") >= 0) and (cmd.find("Error: Nothing to do") < 0)):
-        print(INDENT + "Moonshot current version...".ljust(47) + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
+        print_summary(bcolors.OKGREEN, "Moonshot current version...", "\n\n")
     else:
-        print(INDENT + "Moonshot current version...".ljust(47) + bcolors.WARNING + "[WARN]" + bcolors.ENDC + "\n\n")
+        print_summary(bcolors.WARNING, "Moonshot current version...", "\n\n")
         results = results + INDENT + "Moonshot current version:\n        You are not running the latest version of the Moonshot software.\n"
 
 
@@ -189,12 +203,11 @@ def test_rp():
     test_basic()
     print("Testing task rp...")
 
-
 #/etc/radsec.conf
     if os.path.isfile("/etc/radsec.conf") == True:
-        print(INDENT + "radsec.conf...".ljust(47) + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
+        print_summary(bcolors.OKGREEN, "radsec.conf...", "\n\n")
     else:
-        print(INDENT + "radsec.conf...".ljust(47) + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
+        print_summary(bcolors.FAIL, "radsec.conf...", "\n\n")
         results = results + INDENT + "radsec.conf:\n        /etc/radsec.conf could not be found - you may not be able to communicate with your rp-proxy.\n"
 
 
@@ -208,26 +221,24 @@ def test_rp_proxy():
     test_rp()
     print("Testing task rp-proxy...")
 
-
 #APC
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex(('ov-apc.moonshot.ja.net', 2083))
     if result == 0:
-        print(INDENT + "APC...".ljust(47) + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
+        print_summary(bcolors.OKGREEN, "APC...", "")
     else:
-        print(INDENT + "APC...".ljust(47) + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+        print_summary(bcolors.FAIL, "APC...", "")
         results = results + INDENT + "APC:\n        ov-apc.moonshot.ja.net does not seem to be accessible. Please check the servers network connection, and see status.moonshot.ja.net for any downtime or maintenance issues.\n"
-
 
 #Trust Router
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex(('tr.moonshot.ja.net', 12309))
     if result == 0:
-        print(INDENT + "Trust Router...".ljust(47) + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
+        print_summary(bcolors.OKGREEN, "Trust Router...", "")
     else:
-        print(INDENT + "Trust Router...".ljust(47) + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+        print_summary(bcolors.FAIL, "Trust Router...", "")
         results = results + INDENT + "Trust Router:\n        tr.moonshot.ja.net does not seem to be accessible. Please check the servers network connection, and see status.moonshot.ja.net for any downtime or maintenance issues.\n"
 
 
@@ -247,9 +258,9 @@ def test_rp_proxy():
                 freerad = True
         fil.close()
     if root == True and freerad == True and trustrouter == True:
-        print(INDENT + "Flatstore-users...".ljust(47) + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
+        print_summary(bcolors.OKGREEN, "Flatstore-users...", "")
     else:
-        print(INDENT + "Flatstore-users...".ljust(47) + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+        print_summary(bcolors.FAIL, "Flatstore-users...", "")
         results = results + INDENT + "Flatstore-users:\n        /etc/moonshot/flatstore-users could not be found, or does not contain all the user accounts it needs to. You may be unable to authenticate to the trust router.\n"
         
 
@@ -261,13 +272,14 @@ def test_rp_proxy():
     raduserhome = cmd.read().strip()
 
     if (raduserhome == '~radiusd' or raduserhome == '~freerad'):
-        print(INDENT + "Trust Identity (FreeRADIUS)...                 " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
+        print_summary(bcolors.FAIL, "Trust Identity (FreeRADIUS)...", "\n\n")
         results = results + INDENT + "Trust Identity (FreeRADIUS):\n        FreeRADIUS does not appear to be installed, or no home directory for the FreeRADIUS user could be found. You will not be able to authenticate to the trust router.\n"
     elif os.path.isfile(raduserhome + '/.local/share/moonshot-ui/identities.txt') == True:
-        print(INDENT + "Trust Identity (FreeRADIUS)...                 " + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
+        print_summary(bcolors.OKGREEN, "Trust Identity (FreeRADIUS)...", "\n\n")
     else:
-        print(INDENT + "Trust Identity (FreeRADIUS)...                 " + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
+        print_summary(bcolors.FAIL, "Trust Identity (FreeRADIUS)...", "\n\n")
         results = results + INDENT + "Trust Identity (FreeRADIUS):\n        No trust identity could be found for the FreeRADIUS user account. You will not be able to authenticate to the trust router.\n"
+
 
 
 #=================================  TESTS IDP  ===========================================
@@ -280,28 +292,25 @@ def test_idp():
     test_rp()
     print("Testing task idp...")
 
-
 #Port 2083
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex(('localhost', 2083))
     if result == 0:
-        print(INDENT + "Port 2083...".ljust(47) + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
+        print_summary(bcolors.OKGREEN, "Port 2083...", "")
     else:
-        print(INDENT + "Port 2083...".ljust(47) + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+        print_summary(bcolors.FAIL, "Port 2083...", "")
         results = results + INDENT + "Port 2083:\n        Port 2083 appears to be closed. RP's will not be able to initiate connections to your IDP.\n"
-
 
 #Port 12309
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex(('localhost', 12309))
     if result == 0:
-        print(INDENT + "Port 12309...".ljust(47) + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
+        print_summary(bcolors.OKGREEN, "Port 12309...", "")
     else:
-        print(INDENT + "Port 12309...".ljust(47) + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+        print_summary(bcolors.FAIL, "Port 12309...", "")
         results = results + INDENT + "Port 12309:\n        Port 12309 appears to be closed. The trust router will not be able to initiate connections to your IDP.\n"
-
 
 #flatstore-users
 
@@ -319,12 +328,13 @@ def test_idp():
                 freerad = True
         fil.close()
     if root == True and freerad == True and trustrouter == True:
-        print(INDENT + "Flatstore-users...".ljust(47) + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
+        print_summary(bcolors.OKGREEN, "Flatstore-users...", "")
     else:
-        print(INDENT + "Flatstore-users...".ljust(47) + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+        print_summary(bcolors.FAIL, "Flatstore-users...", "")
         results = results + INDENT + "Flatstore-users:\n        /etc/moonshot/flatstore-users could not be found, or does not contain all the user accounts it needs to. You may be unable to authenticate to the trust router.\n"
         
 #Trust Identity for FreeRADIUS
+
     if (is_rhel == True):
         cmd = os.popen('%s ~radiusd' % bin_echo)
     else:
@@ -332,26 +342,27 @@ def test_idp():
     raduserhome = cmd.read().strip()
 
     if (raduserhome == '~radiusd' or raduserhome == '~freerad'):
-        print(INDENT + "Trust Identity (FreeRADIUS)...".ljust(47) + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
+        print_summary(bcolors.FAIL, "Trust Identity (FreeRADIUS)...", "")
         results = results + INDENT + "Trust Identity (FreeRADIUS):\n        FreeRADIUS does not appear to be installed, or no home directory for the FreeRADIUS user could be found. You will not be able to authenticate to the trust router.\n"
     elif os.path.isfile(raduserhome + '/.local/share/moonshot-ui/identities.txt') == True:
-        print(INDENT + "Trust Identity (FreeRADIUS)...".ljust(47) + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
+        print_summary(bcolors.OKGREEN, "Trust Identity (FreeRADIUS)...", "")
     else:
-        print(INDENT + "Trust Identity (FreeRADIUS)...".ljust(47) + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
+        print_summary(bcolors.FAIL, "Trust Identity (FreeRADIUS)...", "")
         results = results + INDENT + "Trust Identity (FreeRADIUS):\n        No trust identity could be found for the FreeRADIUS user account. You will not be able to authenticate to the trust router.\n"
 
 
 #Trust Identity for TIDS
+
     cmd = os.popen('%s ~trustrouter' % bin_echo)
     trustrouterhome = cmd.read().strip()
 
     if (trustrouterhome == '~trustrouter'):
-        print(INDENT + "Trust Identity (Trust Router)...".ljust(47) + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
+        print_summary(bcolors.FAIL, "Trust Identity (Trust Router)...", "\n\n")
         results = results + INDENT + "Trust Identity (Trust Router):\n        There either is no trustrouter user or no home directory for the trustrouter user could be found. You will not be able to authenticate to the trust router.\n"
     elif os.path.isfile(trustrouterhome + '/.local/share/moonshot-ui/identities.txt') == True:
-        print(INDENT + "Trust Identity (Trust Router)...".ljust(47) + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
+        print_summary(bcolors.OKGREEN, "Trust Identity (Trust Router)...", "\n\n")
     else:
-        print(INDENT + "Trust Identity (Trust Router)...".ljust(47) + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
+        print_summary(bcolors.FAIL, "Trust Identity (Trust Router)...", "\n\n")
         results = results + INDENT + "Trust Identity (Trust Router):\n        No trust identity could be found for the trustrouter user account. You will not be able to authenticate to the trust router.\n"
 
 
@@ -365,7 +376,6 @@ def test_client():
     global is_rhel
     test_basic()
     print("Testing task client...")
-
 
 #gss/mech
     if is_rhel == True:
@@ -396,10 +406,10 @@ def test_client():
             fil.close()
             
             if (s1 == True and s2 == True):
-                print(INDENT + "gss/mech...".ljust(47) + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
+                print_summary(bcolors.OKGREEN, "gss/mech...", "\n\n")
                 return;
 
-    print(INDENT + "gss/mech...".ljust(47) + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
+    print_summary(bcolors.FAIL, "gss/mech...", "\n\n")
     results = results + INDENT + "gss/mech:\n        The Moonshot mech file is missing mech_eap.so will not be loaded.\n"
 
 
@@ -413,7 +423,6 @@ def test_ssh_client():
     test_client()
     print("Testing task ssh-client...")
 
-
 #GSSAPIAuthentication enabled
 
     num = 0
@@ -425,12 +434,12 @@ def test_ssh_client():
             if (line.lower() == 'gssapiauthentication yes'):
                 num = num + 1
         if num > 0:
-            print(INDENT + "GSSAPIAuthentication enabled...".ljust(47) + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
+            print_summary(bcolors.OKGREEN, "GSSAPIAuthentication enabled...", "")
         else:
-            print(INDENT + "GSSAPIAuthentication enabled...".ljust(47) + bcolors.FAIL + "[WARN]" + bcolors.ENDC + "")
+            print_summary(bcolors.FAIL, "GSSAPIAuthentication enabled...", "")
             results = results + INDENT + "GSSAPIAuthentication enabled:\n        GSSAPIAuthentication must be enabled for Moonshot to function when using SSH.\n"
     else:
-        print(INDENT + "GSSAPIAuthentication enabled...".ljust(47) + bcolors.FAIL + "[WARN]" + bcolors.ENDC + "")
+        print_summary(bcolors.FAIL, "GSSAPIAuthentication enabled...", "")
         results = results + INDENT + "GSSAPIAuthentication enabled:\n        GSSAPIAuthentication must be enabled for Moonshot to function when using SSH.\n"
 
 #GSSAPIKeyExchange enabled
@@ -444,12 +453,12 @@ def test_ssh_client():
             if (line.lower() == 'gssapikeyexchange yes'):
                 num = num + 1
         if num > 0:
-            print(INDENT + "GSSAPIKeyExchange enabled...".ljust(47) + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
+            print_summary(bcolors.OKGREEN, "GSSAPIKeyExchange enabled...", "\n\n")
         else:
-            print(INDENT + "GSSAPIKeyExchange enabled...".ljust(47) + bcolors.WARNING + "[WARN]" + bcolors.ENDC + "\n\n")
+            print_summary(bcolors.FAIL, "GSSAPIKeyExchange enabled...", "\n\n")
             results = results + INDENT + "GSSAPIKeyExchange enabled:\n        GSSAPIKeyExchange should be enabled for Moonshot to function correctly when using SSH.\n"
     else:
-        print(INDENT + "GSSAPIKeyExchange enabled...".ljust(47) + bcolors.WARNING + "[WARN]" + bcolors.ENDC + "\n\n")
+        print_summary(bcolors.FAIL, "GSSAPIKeyExchange enabled...", "\n\n")
         results = results + INDENT + "GSSAPIKeyExchange enabled:\n        GSSAPIKeyExchange should be enabled for Moonshot to function correctly when using SSH.\n"
 
 
@@ -470,13 +479,12 @@ def test_ssh_server():
     is_openssh_installed = (len(cmd) > 0)
 
     if (is_openssh_installed == False):
-        print(INDENT + "Task ssh-server...".ljust(47) + bcolors.OKGREEN + "[FAIL]" + bcolors.ENDC + "\n\n")
+        print_summary(bcolors.FAIL, "Task ssh-server...", "\n\n")
         results = results + INDENT + "Task ssh-server:\n        You must have OpenSSH installed before attempting this test.\n"
 
     else:
         openssh = (((cmd.split()[0]).split('_')[1]).split('p')[0]).split('.')
         needs_privsepoff = (int(openssh[0]) < 6) or (int(openssh[0]) == 6 and int(openssh[1]) < 6)
-
 
 #GSSAPIAuthentication enabled
 
@@ -489,14 +497,13 @@ def test_ssh_server():
                 if (line.lower() == 'gssapiauthentication yes'):
                     num = num + 1
             if num > 0:
-                print(INDENT + "GSSAPIAuthentication enabled...".ljust(47) + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
+                print_summary(bcolors.OKGREEN, "GSSAPIAuthentication enabled...", "")
             else:
-                print(INDENT + "GSSAPIAuthentication enabled...".ljust(47) + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+                print_summary(bcolors.FAIL, "GSSAPIAuthentication enabled...", "")
                 results = results + INDENT + "GSSAPIAuthentication enabled:\n        GSSAPIAuthentication must be enabled for Moonshot to function when using SSH.\n"
         else:
-            print(INDENT + "GSSAPIAuthentication enabled...".ljust(47) + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+            print_summary(bcolors.FAIL, "GSSAPIAuthentication enabled...", "")
             results = results + INDENT + "GSSAPIAuthentication enabled:\n        GSSAPIAuthentication must be enabled for Moonshot to function when using SSH.\n"
-
 
 #GSSAPIKeyExchange enabled
 
@@ -509,15 +516,15 @@ def test_ssh_server():
                 if (line.lower() == 'gssapikeyexchange yes'):
                     num = num + 1
             if num > 0:
-                print(INDENT + "GSSAPIKeyExchange enabled...".ljust(47) + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "")
+                print_summary(bcolors.OKGREEN, "GSSAPIKeyExchange enabled...", "")
             else:
-                print(INDENT + "GSSAPIKeyExchange enabled...".ljust(47) + bcolors.WARNING + "[FAIL]" + bcolors.ENDC + "")
-                results = results + INDENT + "GSSAPIKeyExchange enabled:\n        GSSAPIKeyExchange must be enabled for Moonshot to function correctly when using SSH.\n"
+                print_summary(bcolors.FAIL, "GSSAPIKeyExchange enabled...", "")
+                results = results + INDENT + " enabled:\n        GSSAPIKeyExchange must be enabled for Moonshot to function correctly when using SSH.\n"
         else:
-            print(INDENT + "GSSAPIKeyExchange enabled...".ljust(47) + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+            print_summary(bcolors.FAIL, "GSSAPIKeyExchange enabled...", "")
             results = results + INDENT + "GSSAPIKeyExchange enabled:\n        GSSAPIKeyExchange must be enabled for Moonshot to function correctly when using SSH.\n"
 
-#Privilege separation disabled
+#UsePrivilegeSeparation disabled
 
         if (needs_privsepoff == True):
             num = 0
@@ -529,16 +536,15 @@ def test_ssh_server():
                     if (line.lower() == 'useprivilegeseparation no'):
                         num = num + 1
                 if num > 0:
-                    print(INDENT + "Privilege separation...".ljust(47) + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
+                    print_summary(bcolors.OKGREEN, "Privilege separation...", "\n\n")
                 else:
-                    print(INDENT + "Privilege separation...".ljust(47) + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "\n\n")
+                    print_summary(bcolors.FAIL, "Privilege separation...", "\n\n")
                     results = results + INDENT + "Privilege separation:\n        Moonshot currently requires that OpenSSH server has privilege separation disabled.\n\n"
             else:
-                print(INDENT + "Privilege separation...".ljust(47) + bcolors.FAIL + "[FAIL]" + bcolors.ENDC + "")
+                print_summary(bcolors.FAIL, "Privilege separation...", "")
                 results = results + INDENT + "Privilege separation:\n        Moonshot currently requires that OpenSSH server has privilege separation disabled.\n\n"
         else:
-            print(INDENT + "Privilege separation...".ljust(47) + bcolors.OKGREEN + "[OKAY]" + bcolors.ENDC + "\n\n")
-            results = results + INDENT + "Privilege separation:\n        Moonshot no longer requires privilege separation to be enabled on this version of OpenSSH server.\n\n"
+            print("\n")
 
 
 
