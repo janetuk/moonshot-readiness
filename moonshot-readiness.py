@@ -119,12 +119,12 @@ def test_basic():
          if (fail_basic_req or bin_yum == "" or bin_rpm == ""):
              print_summary(bcolors.FAIL, "Some prerequisites couldn\'t be found.", "")
              results = results + INDENT + "Prerequisites for this test:\n        One or more prerequisites for this test couldn\'t be found. Please check that dig, hostname, grep, echo, yum and rpm are installed.\n"
-             sys.exit()
+             return
     else:
          if (fail_basic_req or bin_aptcache == "" or bin_aptget == "" or bin_aptkey == "" or bin_dpkg == ""):
              print_summary(bcolors.FAIL, "Some prerequisites couldn\'t be found.", "")
              results = results + INDENT + "Prerequisites for this test:\n        One or more prerequisites for this test couldn\'t be found. Please check that dig, hostname, grep, echo, apt-get, apt-key, apt-cache and dpkg are installed.\n"
-             sys.exit()
+             return
 
 #Hostname is FQDN
 
