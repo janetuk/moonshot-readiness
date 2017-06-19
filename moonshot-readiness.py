@@ -99,9 +99,9 @@ def test_basic():
 
     #OS checking: We support Debian, Ubuntu, RHEL, CentOS, Scientific Linux
     if (rel_os == 'debian'):
-        good_os = (rel_ver == '7' or rel_ver == '8')
+        good_os = (rel_ver == '8' or rel_ver == '9')
     elif (rel_os == 'ubuntu'):
-        good_os = (rel_ver == '12' or rel_ver == '14')
+        good_os = (rel_ver == '12' or rel_ver == '14' or rel_ver == '16')
     elif (rel_os == 'redhat' or rel_os == 'rhel' or rel_os == 'centos' or rel_os == 'scientific'):
         is_rhel = True
         good_os = (rel_ver == '6' or rel_ver == '7')
