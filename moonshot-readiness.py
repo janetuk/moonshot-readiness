@@ -99,9 +99,9 @@ def test_basic():
 
     #OS checking: We support Debian, Ubuntu, RHEL, CentOS, Scientific Linux
     if (rel_os == 'debian'):
-        good_os = (rel_ver == '7' or rel_ver == '8')
+        good_os = (rel_ver == '8' or rel_ver == '9')
     elif (rel_os == 'ubuntu'):
-        good_os = (rel_ver == '12' or rel_ver == '14')
+        good_os = (rel_ver == '12' or rel_ver == '14' or rel_ver == '16')
     elif (rel_os == 'redhat' or rel_os == 'rhel' or rel_os == 'centos' or rel_os == 'scientific'):
         is_rhel = True
         good_os = (rel_ver == '6' or rel_ver == '7')
@@ -119,12 +119,12 @@ def test_basic():
          if (fail_basic_req or bin_yum == "" or bin_rpm == ""):
              print_summary(bcolors.FAIL, "Some prerequisites couldn\'t be found.", "")
              results = results + INDENT + "Prerequisites for this test:\n        One or more prerequisites for this test couldn\'t be found. Please check that dig, hostname, grep, echo, yum and rpm are installed.\n"
-             sys.exit()
+             return
     else:
          if (fail_basic_req or bin_aptcache == "" or bin_aptget == "" or bin_aptkey == "" or bin_dpkg == ""):
              print_summary(bcolors.FAIL, "Some prerequisites couldn\'t be found.", "")
              results = results + INDENT + "Prerequisites for this test:\n        One or more prerequisites for this test couldn\'t be found. Please check that dig, hostname, grep, echo, apt-get, apt-key, apt-cache and dpkg are installed.\n"
-             sys.exit()
+             return
 
 #Hostname is FQDN
 
